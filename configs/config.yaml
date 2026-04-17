@@ -1,0 +1,109 @@
+# JEPA-DRONE Configuration
+# Data Pipeline and Model Hyperparameters
+
+# ============== DATA PATHS ==============
+data:
+  raw_dir: "data/drone_temparing_dataset_v2"
+  processed_dir: "processed_data"
+  
+# ============== CHUNKING ==============
+chunking:
+  chunk_size: 20          # waypoints per chunk (5 seconds at 4Hz)
+  stride: 10              # overlap between chunks (50% overlap)
+  min_chunk_size: 15      # minimum valid chunk size
+  
+# ============== FEATURES ==============
+features:
+  # Core GPS telemetry features
+  base_features:
+    - "latitude"
+    - "longitude"
+    - "altitude"
+    - "speed"
+    - "heading"
+  
+  # Derived features to compute
+  derived_features:
+    - "delta_lat"          # rate of change in latitude
+    - "delta_lon"          # rate of change in longitude
+    - "delta_alt"          # rate of change in altitude (climb rate)
+    - "acceleration"       # rate of change in speed
+    - "angular_velocity"   # rate of change in heading
+    - "distance"           # distance traveled from previous point
+    
+  # Total: 5 base + 6 derived = 11 features (exceeds proposal's 9)
+  use_derived: true
+  
+# ============== NORMALIZATION ==============
+normalization:
+  method: "robust"         # robust (median/IQR), standard, or minmax
+  clip_outliers: true
+  clip_percentile: [1, 99]
+  
+# ============== DATA SPLITS ==============
+splits:
+  # Training: Learn normal flight dynamics (self-supervised)
+  train:
+    profiles: ["balanced"]
+    replicates: ["rep_00", "rep_01"]
+    use_only_normal: false    # Use all data but discard labels during training
+    extract_normal_from_anomaly: true  # Use non-tampered portions
+    
+  # Validation: Hyperparameter tuning
+  validation:
+    profiles: ["balanced"]
+    replicates: ["rep_02"]
+    
+  # Test: Final evaluation  
+  test:
+    balanced:
+      profiles: ["balanced"]
+      replicates: ["rep_03"]
+    strong:
+      profiles: ["strong"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+    subtle:
+      profiles: ["subtle"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+
+# ============== JEPA MODEL ==============
+model:
+  embedding_dim: 256       # dimension of latent embeddings
+  encoder_hidden: [512, 256, 256]  # 3-layer MLP
+  predictor_hidden: [256, 256]
+  dropout: 0.1
+  
+# ============== MASKING ==============
+masking:
+  # Adaptive masking parameters
+  adaptive: true
+  min_mask_ratio: 0.20     # 20% for high-entropy (turbulent) chunks
+  max_mask_ratio: 0.50     # 50% for low-entropy (stable) chunks
+  
+  # Fixed masking baseline
+  fixed_mask_ratio: 0.30   # 30% for ablation study
+  
+  # Entropy calculation
+  entropy_window: 5        # window for computing local entropy
+  entropy_features: ["speed", "heading", "altitude"]  # features to consider
+  
+# ============== TRAINING ==============
+training:
+  batch_size: 256
+  epochs: 100
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler: "cosine"
+  warmup_epochs: 5
+  
+# ============== ISOLATION FOREST ==============
+isolation_forest:
+  n_estimators: 100
+  contamination: 0.05      # expected anomaly rate
+  max_samples: "auto"
+  random_state: 42
+
+# ============== MISC ==============
+seed: 42
+num_workers: 4
+device: "auto"  # auto, cuda, mps, or cpu
