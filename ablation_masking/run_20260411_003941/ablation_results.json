@@ -1,0 +1,90 @@
+{
+  "fixed_20": {
+    "config_name": "fixed_20",
+    "train_losses": [
+      0.733747402826945,
+      0.4953188260396322,
+      0.3773478627204895
+    ],
+    "val_losses": [
+      0.37005282938480377,
+      0.2417875975370407,
+      0.14093882218003273
+    ],
+    "best_val_loss": 0.14093882218003273,
+    "final_val_loss": 0.14093882218003273,
+    "masking_stats": {
+      "avg_mask_ratio": 0,
+      "avg_entropy": 0,
+      "mask_ratio_std": 0,
+      "entropy_std": 0
+    },
+    "training_time_seconds": 26.62248992919922
+  },
+  "fixed_30": {
+    "config_name": "fixed_30",
+    "train_losses": [
+      0.814763085047404,
+      0.5821218848228454,
+      0.47161165475845335
+    ],
+    "val_losses": [
+      0.4748532101511955,
+      0.2983132228255272,
+      0.20312589034438133
+    ],
+    "best_val_loss": 0.20312589034438133,
+    "final_val_loss": 0.20312589034438133,
+    "masking_stats": {
+      "avg_mask_ratio": 0,
+      "avg_entropy": 0,
+      "mask_ratio_std": 0,
+      "entropy_std": 0
+    },
+    "training_time_seconds": 25.03452181816101
+  },
+  "fixed_50": {
+    "config_name": "fixed_50",
+    "train_losses": [
+      0.7439849575360616,
+      0.527184381087621,
+      0.4118427793184916
+    ],
+    "val_losses": [
+      0.3859693631529808,
+      0.28142149746418,
+      0.17100195586681366
+    ],
+    "best_val_loss": 0.17100195586681366,
+    "final_val_loss": 0.17100195586681366,
+    "masking_stats": {
+      "avg_mask_ratio": 0,
+      "avg_entropy": 0,
+      "mask_ratio_std": 0,
+      "entropy_std": 0
+    },
+    "training_time_seconds": 25.09443998336792
+  },
+  "adaptive_20_50": {
+    "config_name": "adaptive_20_50",
+    "train_losses": [
+      0.7377374092737834,
+      0.4869606932004293,
+      0.39497035145759585
+    ],
+    "val_losses": [
+      0.34103821963071823,
+      0.24210502207279205,
+      0.160764928907156
+    ],
+    "best_val_loss": 0.160764928907156,
+    "final_val_loss": 0.160764928907156,
+    "masking_stats": {
+      "avg_mask_ratio": 0.35602495074272156,
+      "avg_entropy": 0.4799168109893799,
+      "mask_ratio_std": 0.0005869083688594401,
+      "entropy_std": 0.0019563541281968355
+    },
+    "training_time_seconds": 27.276962995529175
+  }
+}
