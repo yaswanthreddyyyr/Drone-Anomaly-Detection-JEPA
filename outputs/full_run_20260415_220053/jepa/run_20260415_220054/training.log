@@ -1,0 +1,2 @@
+Epoch 1/2 | Train Loss: 0.3874 | Val Loss: 0.1403 | LR: 0.000400 | Time: 157.3s
+Epoch 2/2 | Train Loss: 0.2330 | Val Loss: 0.1554 | LR: 0.000600 | Time: 151.4s

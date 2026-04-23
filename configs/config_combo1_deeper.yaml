@@ -1,0 +1,72 @@
+# Combination 1: Deeper encoder + Block masking + More training
+# Expected improvement: AUC 0.70-0.80
+
+data:
+  raw_dir: "data/drone_temparing_dataset_v2"
+  processed_dir: "processed_data"
+  
+chunking:
+  chunk_size: 20
+  stride: 10
+  min_chunk_size: 15
+  
+features:
+  base_features:
+    - "latitude"
+    - "longitude"
+    - "altitude"
+    - "speed"
+    - "heading"
+  derived_features:
+    - "delta_lat"
+    - "delta_lon"
+    - "delta_alt"
+    - "acceleration"
+    - "angular_velocity"
+    - "distance"
+  use_derived: true
+  
+normalization:
+  method: "robust"
+  clip_outliers: true
+  clip_percentile: [1, 99]
+
+# KEY CHANGES FOR COMBO 1:
+model:
+  embedding_dim: 512          # INCREASED from 256
+  encoder_hidden: [1024, 512, 512, 256]  # DEEPER: 4 layers instead of 3
+  predictor_hidden: [512, 512, 256]      # DEEPER predictor
+  dropout: 0.15               # Slightly more regularization
+  use_attention: true
+
+masking:
+  adaptive: true
+  strategy: "block"           # NEW: Block masking instead of random
+  block_size: 4               # Mask 4 consecutive waypoints
+  min_mask_ratio: 0.30        # INCREASED from 0.20
+  max_mask_ratio: 0.60        # INCREASED from 0.50
+  entropy_window: 5
+  entropy_features: ["speed", "heading", "altitude"]
+
+training:
+  batch_size: 128             # REDUCED for larger model
+  epochs: 200                 # DOUBLED from 100
+  learning_rate: 0.0005       # REDUCED for stability
+  weight_decay: 0.0005        # INCREASED regularization
+  scheduler: "cosine"
+  warmup_epochs: 10           # MORE warmup
+
+isolation_forest:
+  n_estimators: 300           # MORE trees
+  contamination: "auto"       # Let sklearn decide
+  max_samples: 0.8
+  random_state: 42
+
+# Threshold tuning
+threshold_tuning:
+  enabled: true
+  metric: "f1"                # Optimize for F1
+  
+seed: 42
+num_workers: 4
+device: "auto"

@@ -1,0 +1,121 @@
+chunking:
+  chunk_size: 20
+  min_chunk_size: 15
+  stride: 10
+data:
+  processed_dir: processed_data_enhanced
+  raw_dir: data/drone_temparing_dataset_v2
+device: auto
+features:
+  base_features:
+  - latitude
+  - longitude
+  - altitude
+  - speed
+  - heading
+  derived_features:
+  - delta_lat
+  - delta_lon
+  - delta_alt
+  - acceleration
+  - angular_velocity
+  - distance
+  - jerk
+  - angular_acceleration
+  - speed_std_5
+  - heading_std_5
+  - altitude_std_5
+  use_derived: true
+  use_second_order: true
+  use_windowed_stats: true
+  window_size: 5
+isolation_forest:
+  contamination: auto
+  max_features: 0.8
+  max_samples: 1.0
+  n_estimators: 250
+  random_state: 42
+masking:
+  adaptive: true
+  block_ratio: 0.5
+  block_size: 5
+  entropy_features:
+  - speed
+  - heading
+  - altitude
+  - acceleration
+  entropy_window: 5
+  max_mask_ratio: 0.55
+  min_mask_ratio: 0.25
+  strategy: hybrid
+model:
+  attention_heads: 8
+  attention_layers: 2
+  dropout: 0.2
+  embedding_dim: 384
+  encoder_hidden:
+  - 768
+  - 512
+  - 384
+  predictor_hidden:
+  - 384
+  - 256
+  use_attention: true
+normalization:
+  clip_outliers: true
+  clip_percentile:
+  - 0.5
+  - 99.5
+  method: robust
+num_workers: 4
+seed: 42
+splits:
+  test:
+    balanced:
+      profiles:
+      - balanced
+      replicates:
+      - rep_03
+    strong:
+      profiles:
+      - strong
+      replicates:
+      - rep_00
+      - rep_01
+      - rep_02
+      - rep_03
+    subtle:
+      profiles:
+      - subtle
+      replicates:
+      - rep_00
+      - rep_01
+      - rep_02
+      - rep_03
+  train:
+    extract_normal_from_anomaly: true
+    profiles:
+    - balanced
+    replicates:
+    - rep_00
+    - rep_01
+    use_only_normal: false
+  validation:
+    profiles:
+    - balanced
+    replicates:
+    - rep_02
+threshold_tuning:
+  enabled: true
+  metric: f1
+  search_range:
+  - -0.6
+  - -0.3
+training:
+  batch_size: 192
+  epochs: 150
+  label_smoothing: 0.1
+  learning_rate: 0.0003
+  scheduler: cosine
+  warmup_epochs: 15
+  weight_decay: 0.001

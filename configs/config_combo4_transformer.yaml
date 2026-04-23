@@ -1,0 +1,110 @@
+# Combination 4: Transformer Encoder + Enhanced Features
+# Expected improvement: AUC 0.75-0.90
+
+data:
+  raw_dir: "data/drone_temparing_dataset_v2"
+  processed_dir: "processed_data_enhanced"  # Use enhanced 17-feature data
+  
+chunking:
+  chunk_size: 20
+  stride: 10
+  min_chunk_size: 15
+  
+features:
+  base_features:
+    - "latitude"
+    - "longitude"
+    - "altitude"
+    - "speed"
+    - "heading"
+  derived_features:
+    # First-order derivatives
+    - "delta_lat"
+    - "delta_lon"
+    - "delta_alt"
+    - "acceleration"
+    - "angular_velocity"
+    - "distance"
+    # Second-order derivatives
+    - "jerk"
+    - "angular_acceleration"
+    - "altitude_jerk"
+    # Windowed statistics
+    - "speed_std_5"
+    - "heading_std_5"
+    - "altitude_std_5"
+  use_derived: true
+  use_second_order: true
+  use_windowed_stats: true
+  window_size: 5
+  
+normalization:
+  method: "robust"
+  clip_outliers: true
+  clip_percentile: [1, 99]
+
+# ============== DATA SPLITS ==============
+splits:
+  train:
+    profiles: ["balanced"]
+    replicates: ["rep_00", "rep_01"]
+    use_only_normal: false
+    extract_normal_from_anomaly: true
+    
+  validation:
+    profiles: ["balanced"]
+    replicates: ["rep_02"]
+    
+  test:
+    balanced:
+      profiles: ["balanced"]
+      replicates: ["rep_03"]
+    strong:
+      profiles: ["strong"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+    subtle:
+      profiles: ["subtle"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+
+# ============== MODEL: TRANSFORMER ==============
+model:
+  encoder_type: "transformer"  # Use Transformer instead of MLP
+  embedding_dim: 256
+  
+  # Transformer-specific parameters
+  n_heads: 8                   # Number of attention heads
+  n_layers: 4                  # Number of transformer layers
+  ff_dim: 1024                 # Feed-forward dimension
+  
+  # Predictor (stays MLP)
+  predictor_hidden: [256, 256]
+  dropout: 0.1
+
+# ============== MASKING ==============
+masking:
+  adaptive: true
+  min_mask_ratio: 0.20
+  max_mask_ratio: 0.50
+  fixed_mask_ratio: 0.30
+  entropy_window: 5
+  entropy_features: ["speed", "heading", "altitude"]
+
+# ============== TRAINING ==============
+training:
+  batch_size: 128              # Smaller batch for larger model
+  epochs: 100
+  learning_rate: 0.0001        # Lower LR for transformer
+  weight_decay: 0.01           # More regularization
+  scheduler: "cosine"
+  warmup_epochs: 10            # More warmup for transformer
+
+# ============== ISOLATION FOREST ==============
+isolation_forest:
+  n_estimators: 200
+  contamination: 0.05
+  max_samples: "auto"
+  random_state: 42
+  
+seed: 42
+num_workers: 4
+device: "auto"

@@ -1,0 +1,11 @@
+data/drone_temparing_dataset_v2
+
+*.pt
+*.pkl
+*.npy
+*.pyc
+.vscode
+notebooks/
+data/
+processed_data/
+processed_data_enhanced/

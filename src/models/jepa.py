@@ -87,6 +87,95 @@ class WaypointEmbedding(nn.Module):
         return self.projection(x)
 
 
+class TransformerEncoder(nn.Module):
+    """
+    Transformer-based encoder for waypoint sequences.
+    
+    Uses multi-head self-attention to model temporal dependencies
+    in GPS telemetry data. Better than MLP for capturing long-range
+    patterns and anomalous deviations.
+    """
+    
+    def __init__(
+        self,
+        input_dim: int,
+        embed_dim: int = 256,
+        n_heads: int = 8,
+        n_layers: int = 4,
+        ff_dim: int = 1024,
+        dropout: float = 0.1,
+        max_len: int = 100
+    ):
+        super().__init__()
+        
+        self.input_dim = input_dim
+        self.embed_dim = embed_dim
+        
+        # Input projection
+        self.input_proj = nn.Linear(input_dim, embed_dim)
+        self.input_norm = nn.LayerNorm(embed_dim)
+        
+        # Positional encoding
+        self.pos_encoding = PositionalEncoding(embed_dim, max_len=max_len, dropout=dropout)
+        
+        # Transformer encoder layers
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=embed_dim,
+            nhead=n_heads,
+            dim_feedforward=ff_dim,
+            dropout=dropout,
+            activation='gelu',
+            batch_first=True,
+            norm_first=True  # Pre-norm for better training stability
+        )
+        
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=n_layers,
+            norm=nn.LayerNorm(embed_dim)
+        )
+        
+        # Output projection (identity if same dim)
+        self.output_proj = nn.Identity()
+        self.output_norm = nn.LayerNorm(embed_dim)
+    
+    def forward(
+        self,
+        x: torch.Tensor,
+        mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """
+        Encode waypoint sequences with Transformer.
+        
+        Args:
+            x: Input features (batch, seq_len, input_dim)
+            mask: Optional boolean mask (batch, seq_len)
+                  True = masked position (excluded from attention)
+                  
+        Returns:
+            Embeddings (batch, seq_len, embed_dim)
+        """
+        # Project input to embedding dimension
+        h = self.input_proj(x)
+        h = self.input_norm(h)
+        
+        # Add positional encoding
+        h = self.pos_encoding(h)
+        
+        # Create attention mask if provided
+        # Transformer expects: True = ignore this position
+        src_key_padding_mask = mask if mask is not None else None
+        
+        # Apply transformer
+        h = self.transformer(h, src_key_padding_mask=src_key_padding_mask)
+        
+        # Output projection
+        out = self.output_proj(h)
+        out = self.output_norm(out)
+        
+        return out
+
+
 class MLPEncoder(nn.Module):
     """
     Multi-layer perceptron encoder for waypoint sequences.
@@ -453,31 +542,62 @@ class JEPA(nn.Module):
         adaptive_masking: bool = False,
         min_mask_ratio: float = 0.20,
         max_mask_ratio: float = 0.50,
-        fixed_mask_ratio: float = 0.30
+        fixed_mask_ratio: float = 0.30,
+        # Encoder type: "mlp" or "transformer"
+        encoder_type: str = "mlp",
+        # Transformer-specific parameters
+        n_heads: int = 8,
+        n_layers: int = 4,
+        ff_dim: int = 1024
     ):
         super().__init__()
         
         self.input_dim = input_dim
         self.embed_dim = embed_dim
         self.ema_decay = ema_decay
+        self.encoder_type = encoder_type
         
-        # Context encoder (fθ)
-        self.context_encoder = MLPEncoder(
-            input_dim=input_dim,
-            embed_dim=embed_dim,
-            hidden_dims=encoder_hidden,
-            dropout=dropout,
-            use_attention=True
-        )
-        
-        # Target encoder (fθ̄) - EMA of context encoder
-        self.target_encoder = MLPEncoder(
-            input_dim=input_dim,
-            embed_dim=embed_dim,
-            hidden_dims=encoder_hidden,
-            dropout=dropout,
-            use_attention=True
-        )
+        # Choose encoder type
+        if encoder_type == "transformer":
+            # Context encoder (fθ) - Transformer
+            self.context_encoder = TransformerEncoder(
+                input_dim=input_dim,
+                embed_dim=embed_dim,
+                n_heads=n_heads,
+                n_layers=n_layers,
+                ff_dim=ff_dim,
+                dropout=dropout,
+                max_len=chunk_size * 2
+            )
+            
+            # Target encoder (fθ̄) - Transformer (EMA)
+            self.target_encoder = TransformerEncoder(
+                input_dim=input_dim,
+                embed_dim=embed_dim,
+                n_heads=n_heads,
+                n_layers=n_layers,
+                ff_dim=ff_dim,
+                dropout=dropout,
+                max_len=chunk_size * 2
+            )
+        else:
+            # Context encoder (fθ) - MLP (default)
+            self.context_encoder = MLPEncoder(
+                input_dim=input_dim,
+                embed_dim=embed_dim,
+                hidden_dims=encoder_hidden,
+                dropout=dropout,
+                use_attention=True
+            )
+            
+            # Target encoder (fθ̄) - MLP (EMA)
+            self.target_encoder = MLPEncoder(
+                input_dim=input_dim,
+                embed_dim=embed_dim,
+                hidden_dims=encoder_hidden,
+                dropout=dropout,
+                use_attention=True
+            )
         
         # Initialize target encoder with context encoder weights
         self._init_target_encoder()
@@ -527,18 +647,25 @@ class JEPA(nn.Module):
     def forward(
         self, 
         x: torch.Tensor,
-        return_embeddings: bool = False
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        return_embeddings: bool = False,
+        return_detailed: bool = False
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor], Dict]:
         """
         Forward pass for training.
         
         Args:
             x: Input features (batch, seq_len, input_dim)
             return_embeddings: If True, also return target embeddings
+            return_detailed: If True, return dict with per-sample losses and details
             
         Returns:
-            loss: JEPA prediction loss
-            embeddings (optional): Target embeddings for the full sequence
+            loss: JEPA prediction loss (if return_detailed=False)
+            Or dict with detailed outputs (if return_detailed=True):
+                - loss: batch mean loss
+                - loss_per_sample: (batch,) per-sample MSE loss
+                - predictions: (batch, n_masked, embed_dim)
+                - targets: (batch, n_masked, embed_dim)
+                - mask_positions: (batch, n_masked)
         """
         batch_size, seq_len, _ = x.shape
         
@@ -560,8 +687,25 @@ class JEPA(nn.Module):
         predictions = self.predictor(context_embeds, mask_positions, visible_mask)
         
         # Compute loss: MSE between predictions and targets
-        # Only compare at valid masked positions
-        loss = F.mse_loss(predictions, target_at_mask.detach())
+        # Per-position MSE: (batch, n_masked, embed_dim) -> (batch, n_masked)
+        loss_per_position = ((predictions - target_at_mask.detach()) ** 2).mean(dim=-1)
+        
+        # Per-sample MSE: (batch,)
+        loss_per_sample = loss_per_position.mean(dim=-1)
+        
+        # Batch mean loss
+        loss = loss_per_sample.mean()
+        
+        if return_detailed:
+            return {
+                "loss": loss,
+                "loss_per_sample": loss_per_sample,
+                "loss_per_position": loss_per_position,
+                "predictions": predictions,
+                "targets": target_at_mask,
+                "mask_positions": mask_positions,
+                "target_embeddings": target_embeds
+            }
         
         if return_embeddings:
             return loss, target_embeds
