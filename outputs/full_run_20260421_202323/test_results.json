@@ -1,0 +1,194 @@
+{
+  "test_balanced": {
+    "n_samples": 69815,
+    "n_anomalies": 55000,
+    "n_normal": 14815,
+    "auc_roc": 0.3548329316110821,
+    "auc_pr": 0.7149026518363837,
+    "recall": 0.02009090909090909,
+    "precision": 0.5637755102040817,
+    "f1_score": 0.03879915730337079,
+    "false_alarm_rate": 0.057711778602767466,
+    "specificity": 0.9422882213972326,
+    "true_positives": 1105,
+    "false_positives": 855,
+    "true_negatives": 13960,
+    "false_negatives": 53895,
+    "threshold_used": -0.45023748399989516,
+    "per_type": {
+      "altitude_spike": {
+        "n_samples": 11710,
+        "auc_roc": 0.2483023983086846,
+        "recall": 0.0038140855064750755
+      },
+      "combined": {
+        "n_samples": 5855,
+        "auc_roc": 0.30693873123539217,
+        "recall": 0.00832447750619908
+      },
+      "coordinate_jump": {
+        "n_samples": 5855,
+        "auc_roc": 0.3453292565943269,
+        "recall": 0.013650062045736572
+      },
+      "deletion_gap": {
+        "n_samples": 3911,
+        "auc_roc": 0.46731308438243807,
+        "recall": 0.039913700107874865
+      },
+      "heading_inconsistency": {
+        "n_samples": 8197,
+        "auc_roc": 0.23544935487204988,
+        "recall": 0.0023971738581882412
+      },
+      "injection": {
+        "n_samples": 2670,
+        "auc_roc": 0.6412659545423521,
+        "recall": 0.013309671694764862
+      },
+      "precision_rounding": {
+        "n_samples": 8197,
+        "auc_roc": 0.3915959032605888,
+        "recall": 0.01105682694780149
+      },
+      "speed_inconsistency": {
+        "n_samples": 8197,
+        "auc_roc": 0.45289605615118533,
+        "recall": 0.05375664052618265
+      },
+      "timestamp_drift": {
+        "n_samples": 5855,
+        "auc_roc": 0.5411906741388512,
+        "recall": 0.06037535410764872
+      }
+    }
+  },
+  "test_strong": {
+    "n_samples": 279037,
+    "n_anomalies": 228239,
+    "n_normal": 50798,
+    "auc_roc": 0.39123458097497243,
+    "auc_pr": 0.7675052153861517,
+    "recall": 0.02260788033596362,
+    "precision": 0.6610299769408148,
+    "f1_score": 0.0437204770276854,
+    "false_alarm_rate": 0.052088664908067246,
+    "specificity": 0.9479113350919327,
+    "true_positives": 5160,
+    "false_positives": 2646,
+    "true_negatives": 48152,
+    "false_negatives": 223079,
+    "threshold_used": -0.45023748399989516,
+    "per_type": {
+      "altitude_spike": {
+        "n_samples": 26933,
+        "auc_roc": 0.22212159481817242,
+        "recall": 0.004310178949393881
+      },
+      "combined": {
+        "n_samples": 28104,
+        "auc_roc": 0.30975678539936236,
+        "recall": 0.007972833308725823
+      },
+      "coordinate_jump": {
+        "n_samples": 28104,
+        "auc_roc": 0.3635091818613023,
+        "recall": 0.012956332361300801
+      },
+      "deletion_gap": {
+        "n_samples": 20830,
+        "auc_roc": 0.501451581771839,
+        "recall": 0.04866562009419152
+      },
+      "heading_inconsistency": {
+        "n_samples": 26933,
+        "auc_roc": 0.24884621603067367,
+        "recall": 0.002889393997765535
+      },
+      "injection": {
+        "n_samples": 33375,
+        "auc_roc": 0.6421421527351421,
+        "recall": 0.014501467831500017
+      },
+      "precision_rounding": {
+        "n_samples": 30446,
+        "auc_roc": 0.3646958598065573,
+        "recall": 0.012480553154710458
+      },
+      "speed_inconsistency": {
+        "n_samples": 32788,
+        "auc_roc": 0.4539212734821786,
+        "recall": 0.05211499493414387
+      },
+      "timestamp_drift": {
+        "n_samples": 29275,
+        "auc_roc": 0.49160068219179986,
+        "recall": 0.0616588751947868
+      }
+    }
+  },
+  "test_subtle": {
+    "n_samples": 281583,
+    "n_anomalies": 223129,
+    "n_normal": 58454,
+    "auc_roc": 0.38658246520522416,
+    "auc_pr": 0.7353844686300774,
+    "recall": 0.02320182495327815,
+    "precision": 0.621190304775618,
+    "f1_score": 0.04473285147086144,
+    "false_alarm_rate": 0.054008280015054574,
+    "specificity": 0.9459917199849455,
+    "true_positives": 5177,
+    "false_positives": 3157,
+    "true_negatives": 55297,
+    "false_negatives": 217952,
+    "threshold_used": -0.45023748399989516,
+    "per_type": {
+      "altitude_spike": {
+        "n_samples": 23420,
+        "auc_roc": 0.22777475634685618,
+        "recall": 0.004471202797821949
+      },
+      "combined": {
+        "n_samples": 26933,
+        "auc_roc": 0.3070614077403751,
+        "recall": 0.00844321073328707
+      },
+      "coordinate_jump": {
+        "n_samples": 29275,
+        "auc_roc": 0.3594901179193171,
+        "recall": 0.012845078418848912
+      },
+      "deletion_gap": {
+        "n_samples": 25039,
+        "auc_roc": 0.4819377526942681,
+        "recall": 0.04123348017621145
+      },
+      "heading_inconsistency": {
+        "n_samples": 33959,
+        "auc_roc": 0.2307218771260368,
+        "recall": 0.002721546082808391
+      },
+      "injection": {
+        "n_samples": 29370,
+        "auc_roc": 0.6411000845007713,
+        "recall": 0.015858959909837385
+      },
+      "precision_rounding": {
+        "n_samples": 26933,
+        "auc_roc": 0.39161511916923397,
+        "recall": 0.01510361784334387
+      },
+      "speed_inconsistency": {
+        "n_samples": 30446,
+        "auc_roc": 0.4855247068699356,
+        "recall": 0.05648813374646736
+      },
+      "timestamp_drift": {
+        "n_samples": 29275,
+        "auc_roc": 0.49774938327126544,
+        "recall": 0.06140319778778317
+      }
+    }
+  }
+}

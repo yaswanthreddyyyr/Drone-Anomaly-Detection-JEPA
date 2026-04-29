@@ -1,0 +1,70 @@
+chunking:
+  chunk_size: 20
+  min_chunk_size: 15
+  stride: 10
+data:
+  processed_dir: processed_data
+  raw_dir: data/drone_temparing_dataset_v2
+device: auto
+features:
+  base_features:
+  - latitude
+  - longitude
+  - altitude
+  - speed
+  - heading
+  derived_features:
+  - delta_lat
+  - delta_lon
+  - delta_alt
+  - acceleration
+  - angular_velocity
+  - distance
+  use_derived: true
+isolation_forest:
+  contamination: auto
+  max_samples: 0.8
+  n_estimators: 300
+  random_state: 42
+masking:
+  adaptive: true
+  block_size: 4
+  entropy_features:
+  - speed
+  - heading
+  - altitude
+  entropy_window: 5
+  max_mask_ratio: 0.6
+  min_mask_ratio: 0.3
+  strategy: block
+model:
+  dropout: 0.15
+  embedding_dim: 512
+  encoder_hidden:
+  - 1024
+  - 512
+  - 512
+  - 256
+  predictor_hidden:
+  - 512
+  - 512
+  - 256
+  use_attention: true
+normalization:
+  clip_outliers: true
+  clip_percentile:
+  - 1
+  - 99
+  method: robust
+num_workers: 4
+seed: 42
+threshold_tuning:
+  enabled: true
+  metric: f1
+training:
+  batch_size: 128
+  epochs: 200
+  learning_rate: 0.0005
+  scheduler: cosine
+  warmup_epochs: 10
+  weight_decay: 0.0005

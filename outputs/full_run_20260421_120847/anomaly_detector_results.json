@@ -1,0 +1,83 @@
+{
+  "fit_stats": {
+    "n_samples": 31355,
+    "embedding_dim": 512,
+    "score_mean": -0.4524114150311808,
+    "score_std": 0.01874005557566223,
+    "score_min": -0.5179289602490721,
+    "score_max": -0.398459229046536,
+    "score_percentiles": {
+      "1%": -0.4963189193735783,
+      "5%": -0.48170249518649416,
+      "10%": -0.47559978616116155,
+      "50%": -0.45354372458126196,
+      "90%": -0.4262948534538617,
+      "95%": -0.4173073558226357,
+      "99%": -0.40784955885816776
+    }
+  },
+  "validation": {
+    "n_samples": 69521,
+    "n_anomalies": 56830,
+    "n_normal": 12691,
+    "auc_roc": 0.4253508227817571,
+    "auc_pr": 0.7842860423850299,
+    "recall": 0.03718106633820165,
+    "precision": 0.7686431429610767,
+    "f1_score": 0.07093103274643751,
+    "false_alarm_rate": 0.05011425419588685,
+    "specificity": 0.9498857458041131,
+    "true_positives": 2113,
+    "false_positives": 636,
+    "true_negatives": 12055,
+    "false_negatives": 54717,
+    "threshold_used": -0.4638591352792403,
+    "per_type": {
+      "altitude_spike": {
+        "n_samples": 14052,
+        "auc_roc": 0.28000605490958125,
+        "recall": 0.007984031936127744
+      },
+      "combined": {
+        "n_samples": 5855,
+        "auc_roc": 0.40295321575288157,
+        "recall": 0.026605179141539554
+      },
+      "coordinate_jump": {
+        "n_samples": 5855,
+        "auc_roc": 0.554079586857929,
+        "recall": 0.07404119318181818
+      },
+      "deletion_gap": {
+        "n_samples": 6802,
+        "auc_roc": 0.4923164386187795,
+        "recall": 0.051297898640296664
+      },
+      "heading_inconsistency": {
+        "n_samples": 5855,
+        "auc_roc": 0.3027036698934868,
+        "recall": 0.004254564793476334
+      },
+      "injection": {
+        "n_samples": 5340,
+        "auc_roc": 0.5319276064728917,
+        "recall": 0.08705307572729291
+      },
+      "precision_rounding": {
+        "n_samples": 4684,
+        "auc_roc": 0.5128715588686477,
+        "recall": 0.06352413019079686
+      },
+      "speed_inconsistency": {
+        "n_samples": 8197,
+        "auc_roc": 0.46590497627930944,
+        "recall": 0.033628318584070796
+      },
+      "timestamp_drift": {
+        "n_samples": 8197,
+        "auc_roc": 0.5084524085843715,
+        "recall": 0.04932962307108525
+      }
+    }
+  }
+}

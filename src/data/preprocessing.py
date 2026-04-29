@@ -227,10 +227,32 @@ class DataPreprocessor:
         return features.astype(np.float32)
     
     def _compute_derived_features(self, df: pd.DataFrame) -> np.ndarray:
-        """Compute derived features from base telemetry."""
-        n = len(df)
-        derived = np.zeros((n, 6), dtype=np.float32)
+        """Compute derived features from base telemetry.
         
+        Features computed:
+        - 1st order: delta_lat, delta_lon, delta_alt, acceleration, angular_velocity, distance
+        - 2nd order: jerk, angular_acceleration, altitude_jerk
+        - Windowed: speed_std_5, heading_std_5, altitude_std_5
+        
+        Total: 12 derived features (was 6)
+        """
+        n = len(df)
+        
+        # Check config for enhanced features
+        use_second_order = self.config.get("features", {}).get("use_second_order", False)
+        use_windowed_stats = self.config.get("features", {}).get("use_windowed_stats", False)
+        window_size = self.config.get("features", {}).get("window_size", 5)
+        
+        # Base: 6 first-order derivatives
+        num_features = 6
+        if use_second_order:
+            num_features += 3  # jerk, angular_acceleration, altitude_jerk
+        if use_windowed_stats:
+            num_features += 3  # speed_std, heading_std, altitude_std
+        
+        derived = np.zeros((n, num_features), dtype=np.float32)
+        
+        # ========== 1ST ORDER DERIVATIVES ==========
         # Delta latitude (rate of change)
         derived[1:, 0] = np.diff(df["latitude"].values)
         
@@ -238,30 +260,111 @@ class DataPreprocessor:
         derived[1:, 1] = np.diff(df["longitude"].values)
         
         # Delta altitude (climb rate)
-        derived[1:, 2] = np.diff(df["altitude"].values)
+        delta_alt = np.zeros(n)
+        delta_alt[1:] = np.diff(df["altitude"].values)
+        derived[:, 2] = delta_alt
         
         # Acceleration (delta speed)
-        derived[1:, 3] = np.diff(df["speed"].values)
+        acceleration = np.zeros(n)
+        acceleration[1:] = np.diff(df["speed"].values)
+        derived[:, 3] = acceleration
         
         # Angular velocity (delta heading) - handle wrap-around
         headings = df["heading"].values
-        delta_heading = np.diff(headings)
+        delta_heading = np.zeros(n)
+        raw_delta = np.diff(headings)
         # Normalize to [-180, 180]
-        delta_heading = np.mod(delta_heading + 180, 360) - 180
-        derived[1:, 4] = delta_heading
+        delta_heading[1:] = np.mod(raw_delta + 180, 360) - 180
+        derived[:, 4] = delta_heading
         
         # Distance traveled (haversine approximation for small distances)
         lat = np.radians(df["latitude"].values)
         lon = np.radians(df["longitude"].values)
-        
-        # Simple Euclidean approximation (valid for small distances)
         dlat = np.diff(lat)
         dlon = np.diff(lon)
-        # Approximate distance in degrees (multiply by ~111km for meters)
         dist = np.sqrt(dlat**2 + dlon**2) * 111000  # meters
         derived[1:, 5] = dist
         
+        feat_idx = 6
+        
+        # ========== 2ND ORDER DERIVATIVES ==========
+        if use_second_order:
+            # Jerk (rate of change of acceleration)
+            jerk = np.zeros(n)
+            jerk[2:] = np.diff(acceleration[1:])
+            derived[:, feat_idx] = jerk
+            feat_idx += 1
+            
+            # Angular acceleration (rate of change of angular velocity)
+            angular_accel = np.zeros(n)
+            angular_accel[2:] = np.diff(delta_heading[1:])
+            # Normalize to [-180, 180]
+            angular_accel = np.mod(angular_accel + 180, 360) - 180
+            derived[:, feat_idx] = angular_accel
+            feat_idx += 1
+            
+            # Altitude jerk (rate of change of climb rate)
+            alt_jerk = np.zeros(n)
+            alt_jerk[2:] = np.diff(delta_alt[1:])
+            derived[:, feat_idx] = alt_jerk
+            feat_idx += 1
+        
+        # ========== WINDOWED STATISTICS ==========
+        if use_windowed_stats:
+            # Speed variance over window
+            speed = df["speed"].values
+            speed_std = self._rolling_std(speed, window_size)
+            derived[:, feat_idx] = speed_std
+            feat_idx += 1
+            
+            # Heading variance over window (handle circular)
+            heading_std = self._rolling_circular_std(headings, window_size)
+            derived[:, feat_idx] = heading_std
+            feat_idx += 1
+            
+            # Altitude variance over window
+            altitude = df["altitude"].values
+            alt_std = self._rolling_std(altitude, window_size)
+            derived[:, feat_idx] = alt_std
+            feat_idx += 1
+        
         return derived
+    
+    def _rolling_std(self, arr: np.ndarray, window: int) -> np.ndarray:
+        """Compute rolling standard deviation."""
+        n = len(arr)
+        result = np.zeros(n, dtype=np.float32)
+        
+        for i in range(n):
+            start = max(0, i - window + 1)
+            result[i] = np.std(arr[start:i+1])
+        
+        return result
+    
+    def _rolling_circular_std(self, arr: np.ndarray, window: int) -> np.ndarray:
+        """Compute rolling standard deviation for circular data (heading)."""
+        n = len(arr)
+        result = np.zeros(n, dtype=np.float32)
+        
+        for i in range(n):
+            start = max(0, i - window + 1)
+            window_data = arr[start:i+1]
+            
+            # Convert to radians for circular statistics
+            rad = np.radians(window_data)
+            
+            # Circular mean
+            sin_mean = np.mean(np.sin(rad))
+            cos_mean = np.mean(np.cos(rad))
+            
+            # Circular variance (1 - R, where R is resultant length)
+            R = np.sqrt(sin_mean**2 + cos_mean**2)
+            circular_var = 1 - R
+            
+            # Convert to approximate standard deviation in degrees
+            result[i] = np.degrees(np.sqrt(-2 * np.log(max(R, 1e-10))))
+        
+        return result
     
     def create_chunks(self) -> None:
         """

@@ -1,0 +1,119 @@
+# Combination 2: Enhanced features + 2nd order derivatives + windowed stats
+# Expected improvement: AUC 0.75-0.85
+
+data:
+  raw_dir: "data/drone_temparing_dataset_v2"
+  processed_dir: "processed_data_enhanced"  # Separate for new features
+  
+chunking:
+  chunk_size: 20              # Keep same as baseline for fair comparison
+  stride: 10                  # 50% overlap
+  min_chunk_size: 15
+  
+features:
+  base_features:
+    - "latitude"
+    - "longitude"
+    - "altitude"
+    - "speed"
+    - "heading"
+  
+  # EXPANDED derived features
+  derived_features:
+    # First-order derivatives
+    - "delta_lat"
+    - "delta_lon"
+    - "delta_alt"
+    - "acceleration"
+    - "angular_velocity"
+    - "distance"
+    
+    # NEW: Second-order derivatives (for detecting sudden changes)
+    - "jerk"                  # Rate of change of acceleration
+    - "angular_acceleration"  # Rate of change of heading rate
+    
+    # NEW: Windowed statistics (5-point windows)
+    - "speed_std_5"
+    - "heading_std_5"
+    - "altitude_std_5"
+    
+  use_derived: true
+  use_second_order: true      # NEW
+  use_windowed_stats: true    # NEW
+  window_size: 5
+  
+normalization:
+  method: "robust"
+  clip_outliers: true
+  clip_percentile: [0.5, 99.5]  # More aggressive clipping
+
+# ============== DATA SPLITS ==============
+splits:
+  train:
+    profiles: ["balanced"]
+    replicates: ["rep_00", "rep_01"]
+    use_only_normal: false
+    extract_normal_from_anomaly: true
+    
+  validation:
+    profiles: ["balanced"]
+    replicates: ["rep_02"]
+    
+  test:
+    balanced:
+      profiles: ["balanced"]
+      replicates: ["rep_03"]
+    strong:
+      profiles: ["strong"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+    subtle:
+      profiles: ["subtle"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+
+model:
+  embedding_dim: 384          # Balanced size
+  encoder_hidden: [768, 512, 384]
+  predictor_hidden: [384, 256]
+  dropout: 0.2
+  use_attention: true
+  
+  # NEW: Multi-head attention settings
+  attention_heads: 8
+  attention_layers: 2
+
+masking:
+  adaptive: true
+  strategy: "hybrid"          # NEW: Mix of random and block
+  block_ratio: 0.5            # 50% block, 50% random
+  block_size: 5
+  min_mask_ratio: 0.25
+  max_mask_ratio: 0.55
+  entropy_window: 5
+  entropy_features: ["speed", "heading", "altitude", "acceleration"]
+
+training:
+  batch_size: 192
+  epochs: 150
+  learning_rate: 0.0003       # Lower LR for attention
+  weight_decay: 0.001
+  scheduler: "cosine"
+  warmup_epochs: 15
+  
+  # NEW: Label smoothing for robustness
+  label_smoothing: 0.1
+
+isolation_forest:
+  n_estimators: 250
+  contamination: "auto"
+  max_samples: 1.0
+  max_features: 0.8           # Feature subsampling
+  random_state: 42
+
+threshold_tuning:
+  enabled: true
+  metric: "f1"
+  search_range: [-0.6, -0.3]  # Based on diagnostics
+  
+seed: 42
+num_workers: 4
+device: "auto"

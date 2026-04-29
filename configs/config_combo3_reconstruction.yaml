@@ -1,0 +1,117 @@
+# Combination 3: Use reconstruction error directly (no Isolation Forest)
+# This approach uses JEPA's prediction error as anomaly score
+# Now with enhanced features (2nd order derivatives + windowed variance)
+# Expected improvement: AUC 0.80-0.90
+
+data:
+  raw_dir: "data/drone_temparing_dataset_v2"
+  processed_dir: "processed_data_enhanced"  # Use enhanced features
+  
+chunking:
+  chunk_size: 20
+  stride: 10
+  min_chunk_size: 15
+  
+features:
+  base_features:
+    - "latitude"
+    - "longitude"
+    - "altitude"
+    - "speed"
+    - "heading"
+  derived_features:
+    # First-order derivatives
+    - "delta_lat"
+    - "delta_lon"
+    - "delta_alt"
+    - "acceleration"
+    - "angular_velocity"
+    - "distance"
+    # Second-order derivatives
+    - "jerk"
+    - "angular_acceleration"
+    - "altitude_jerk"
+    # Windowed statistics
+    - "speed_std_5"
+    - "heading_std_5"
+    - "altitude_std_5"
+  use_derived: true
+  use_second_order: true
+  use_windowed_stats: true
+  window_size: 5
+  
+normalization:
+  method: "robust"
+  clip_outliers: true
+  clip_percentile: [1, 99]
+
+# ============== DATA SPLITS ==============
+splits:
+  train:
+    profiles: ["balanced"]
+    replicates: ["rep_00", "rep_01"]
+    use_only_normal: false
+    extract_normal_from_anomaly: true
+    
+  validation:
+    profiles: ["balanced"]
+    replicates: ["rep_02"]
+    
+  test:
+    balanced:
+      profiles: ["balanced"]
+      replicates: ["rep_03"]
+    strong:
+      profiles: ["strong"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+    subtle:
+      profiles: ["subtle"]
+      replicates: ["rep_00", "rep_01", "rep_02", "rep_03"]
+
+model:
+  embedding_dim: 256
+  encoder_hidden: [512, 256, 256]
+  predictor_hidden: [256, 256]
+  dropout: 0.1
+  use_attention: true
+
+masking:
+  adaptive: true
+  min_mask_ratio: 0.20
+  max_mask_ratio: 0.50
+  entropy_window: 5
+  entropy_features: ["speed", "heading", "altitude"]
+
+training:
+  batch_size: 256
+  epochs: 150                 # More training
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler: "cosine"
+  warmup_epochs: 5
+
+# NEW: Use reconstruction error instead of Isolation Forest
+anomaly_detection:
+  method: "reconstruction_error"  # NEW: Not isolation_forest
+  
+  # Score computation
+  error_aggregation: "max"        # max, mean, or sum of masked position errors
+  error_normalization: true       # Normalize by number of masked positions
+  
+  # Multiple mask samples for robust scoring
+  n_mask_samples: 5               # Average error over 5 different masks
+  
+  # Threshold settings
+  threshold_method: "percentile"  # percentile or optimal
+  threshold_percentile: 95        # 95th percentile of training errors
+
+# Fallback: still keep IF config in case needed
+isolation_forest:
+  n_estimators: 100
+  contamination: 0.05
+  max_samples: "auto"
+  random_state: 42
+  
+seed: 42
+num_workers: 4
+device: "auto"
