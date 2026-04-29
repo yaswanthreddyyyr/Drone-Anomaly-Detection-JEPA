@@ -1,0 +1,61 @@
+{
+  "champion_generation": 2,
+  "timestamp": "2026-04-22T12:00:00Z",
+  "method": "Local Outlier Factor (LOF) with Manhattan distance",
+  "scaler": "StandardScaler",
+  "pca_components": 124,
+  "metric": "manhattan",
+  "n_neighbors": 22,
+  "novelty": true,
+  "threshold": "calibrated_on_validation",
+  "jepa_checkpoint": "full_run_20260422_032409/best_model.pt",
+  "pooling": "cls",
+  "metrics": {
+    "auc": 0.7719,
+    "recall": 0.5326,
+    "f1": 0.6854,
+    "far": 0.0860
+  },
+  "score": 2.5972,
+  "improvements": {
+    "vs_previous_champion_2_2730": {
+      "delta": 0.3242,
+      "percent": 14.3
+    },
+    "vs_initial_baseline_1_9101": {
+      "delta": 0.6871,
+      "percent": 35.9
+    },
+    "vs_checkpoint_crossover_2_0395": {
+      "delta": 0.5577,
+      "percent": 27.3
+    }
+  },
+  "key_differences_from_v1": {
+    "metric_change": "minkowski (Euclidean) → manhattan (L1 distance)",
+    "pca_components": "128 → 124 (minor adjustment)",
+    "n_neighbors": "20 → 22 (tuned for manhattan metric)",
+    "recall_improvement": "0.4039 → 0.5326 (+31.8%)",
+    "far_increase": "0.0457 → 0.0860 (still well within 0.20 constraint)",
+    "f1_improvement": "0.5700 → 0.6854 (+20.2%)"
+  },
+  "performance_summary": {
+    "rank": 1,
+    "status": "CURRENT_CHAMPION",
+    "validated_on": ["test_balanced", "test_strong", "test_subtle"],
+    "constraint_compliance": {
+      "far_constraint": 0.20,
+      "far_value": 0.0860,
+      "is_compliant": true,
+      "margin": 0.1140
+    }
+  },
+  "reproducibility": {
+    "framework": "scikit-learn LocalOutlierFactor",
+    "scaler_library": "scikit-learn StandardScaler",
+    "pca_library": "scikit-learn PCA",
+    "random_state": 42,
+    "python_version": "3.9+",
+    "sklearn_version": "1.0+"
+  }
+}

@@ -1,0 +1,9 @@
+split,sample_idx,true_label,pred_label,outcome,anomaly_type,score,threshold,confidence,anomaly_fraction,figure_path
+validation,0,1,1,TP,altitude_spike,97393786880.00000000,1.24630702,1.000000,0.300000,validation/anomaly/anomaly_tp_01_idx0.png
+validation,9047,1,1,TP,altitude_spike,3.79054999,1.24630702,1.000000,0.200000,validation/anomaly/anomaly_tp_02_idx9047.png
+validation,1852,0,0,TN,injection,0.91786325,1.24630702,0.133832,0.000000,validation/normal/normal_tn_01_idx1852.png
+validation,51623,0,0,TN,deletion_gap,0.93075657,1.24630702,0.128579,0.000000,validation/normal/normal_tn_02_idx51623.png
+validation,68353,0,1,FP,combined,363849568.00000000,1.24630702,1.000000,0.000000,validation/hard_cases/hard_case_fp_01_idx68353.png
+validation,15277,0,1,FP,injection,9083246592.00000000,1.24630702,1.000000,0.000000,validation/hard_cases/hard_case_fp_02_idx15277.png
+validation,31637,1,0,FN,speed_inconsistency,0.94296688,1.24630702,0.123603,0.450000,validation/hard_cases/hard_case_fn_01_idx31637.png
+validation,46250,1,0,FN,speed_inconsistency,0.94296688,1.24630702,0.123603,0.300000,validation/hard_cases/hard_case_fn_02_idx46250.png

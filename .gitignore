@@ -1,11 +1,21 @@
-data/drone_temparing_dataset_v2
-
+.venv/
+__pycache__/
+*.py[cod]
 *.pt
 *.pkl
 *.npy
 *.pyc
 .vscode
-notebooks/
+
+# Large local datasets/artifacts
 data/
+drone_temparing_dataset_v2/
+processed_data/
+smoke_outputs/
+
+# Notebook/runtime outputs
+.ipynb_checkpoints/
+data/drone_temparing_dataset_v2
+notebooks/
 processed_data/
 processed_data_enhanced/
