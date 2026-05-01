@@ -19,3 +19,4 @@ data/drone_temparing_dataset_v2
 notebooks/
 processed_data/
 processed_data_enhanced/
+outputs/
